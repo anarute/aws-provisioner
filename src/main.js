@@ -11,6 +11,8 @@ let base = require('taskcluster-base');
 
 let workerType = require('./worker-type');
 let secret = require('./secret');
+let workerState = require('./worker-state');
+let amiSet = require('./ami-set');
 let AwsManager = require('./aws-manager');
 let provision = require('./provision');
 let exchanges = require('./exchanges');
@@ -56,6 +58,30 @@ let load = base.loader({
         },
       });
       return WorkerType;
+    },
+  },
+
+  WorkerState: {
+    requires: ['cfg'],
+    setup: async ({cfg}) => {
+      let WorkerState = workerState.setup({
+        account: cfg.azure.account,
+        table: cfg.app.workerStateTableName,
+        credentials: cfg.taskcluster.credentials,
+      });
+      return WorkerState;
+    },
+  },
+
+  amiSet: {
+    requires: ['cfg'],
+    setup: async ({cfg}) => {
+      let amiSet = amiSet.setup({
+        account: cfg.azure.account,
+        table: cfg.app.workerStateTableName,
+        credentials: cfg.taskcluster.credentials,
+      });
+      return amiSet;
     },
   },
 
@@ -124,8 +150,9 @@ let load = base.loader({
   },
 
   api: {
-    requires: ['cfg', 'WorkerType', 'Secret', 'ec2', 'stateContainer', 'validator', 'publisher', 'influx'],
-    setup: async ({cfg, WorkerType, Secret, ec2, stateContainer, validator, publisher, influx}) => {
+    requires: ['cfg', 'WorkerType', 'WorkerState', 'amiSet', 'Secret', 'ec2', 'validator', 'publisher', 'influx'],
+    setup: async ({cfg, WorkerType, WorkerState, Secret, ec2, validator, publisher, influx}) => {
+
       let reportInstanceStarted = series.instanceStarted.reporter(influx);
 
       let router = await v1.setup({
@@ -154,7 +181,7 @@ let load = base.loader({
         drain: influx,
       });
 
-      return router; 
+      return router;
     },
   },
 
@@ -247,7 +274,7 @@ let load = base.loader({
       } catch (err) {
         debug('[alert-operator] Error: ' + err.stack || err);
       }
-      
+
       return provisioner;
     },
   },
