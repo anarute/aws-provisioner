@@ -151,13 +151,14 @@ let load = base.loader({
 
   api: {
     requires: ['cfg', 'WorkerType', 'WorkerState', 'amiSet', 'Secret', 'ec2', 'validator', 'publisher', 'influx'],
-    setup: async ({cfg, WorkerType, WorkerState, Secret, ec2, validator, publisher, influx}) => {
+    setup: async ({cfg, WorkerType, WorkerState, amiSet, Secret, ec2, validator, publisher, influx}) => {
 
       let reportInstanceStarted = series.instanceStarted.reporter(influx);
 
       let router = await v1.setup({
         context: {
           WorkerType: WorkerType,
+          amiSet: amiSet,
           Secret: Secret,
           publisher: publisher,
           keyPrefix: cfg.app.awsKeyPrefix,
