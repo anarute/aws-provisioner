@@ -125,7 +125,7 @@ async function validateWorkerType(ctx, workerTypeName, workerType) {
           ImageIds: [launchSpec.ImageId],
         }).promise();
         if (images.data.Images.length !== 1) {
-          reasons.push(new Error(`Too many results found for ${launchSpec.ImageId}`)); 
+          reasons.push(new Error(`Too many results found for ${launchSpec.ImageId}`));
         }
         let image = images.data.Images[0];
         if (image.ImageId !== launchSpec.ImageId) {
@@ -144,7 +144,7 @@ async function validateWorkerType(ctx, workerTypeName, workerType) {
   // Finally, let's verify that the image for this workerType exists in EC2
 
   if (reasons.length > 0) {
-    debug('Found errors with ' + workerTypeName); 
+    debug('Found errors with ' + workerTypeName);
     let e = new Error('Refusing to create an invalid worker type');
     e.reasons = reasons;
     throw e;
@@ -575,6 +575,105 @@ api.declare({
       debug(err.stack);
     }
     throw err;
+  }
+});
+
+api.declare({
+  method: 'put',
+  route: '/ami-set/:amiSetId',
+  name: 'createAmiSet',
+  deferAuth: true,
+  scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
+  input: 'create-ami-set-request.json#',
+  output: 'get-ami-set-response.json#',
+  title: 'Create new AMI Set',
+  stability:  base.API.stability.stable,
+  description: [
+    'Create an AMI Set. An AMI Set is a collection of AMIs with a single name.',
+  ].join('\n'),
+}, async function (req, res) {
+  let input = req.body;
+  let amiSet = req.params.amiSetId;
+
+  input.lastModified = new Date();
+
+  // Authenticate request with parameterized scope
+  if (!req.satisfies({amiSet: amiSetId})) {
+    return;
+  }
+
+  // Create amiSet
+  let aSet;
+  try {
+    aSet = await this.amiSet.create(amiSet, input);
+  } catch (err) {
+    // We only catch EntityAlreadyExists errors
+    if (!err || err.code !== 'EntityAlreadyExists') {
+      throw err;
+    }
+    aSet = await this.amiSet.load({amiSetId});
+
+    // Check if it matches the existing amiSet
+    let match = [
+      'amiSetId',
+      'amis',
+    ].every((key) => {
+      return _.isEqual(aSet[key], input[key]);
+    });
+
+    // If we don't have a match we return 409, otherwise we continue as this is
+    // is an idempotent operation.
+    if (!match) {
+      res.status(409).json({
+        error: 'AMI Set already exists with different definition',
+      });
+      return;
+    }
+  }
+
+  // Publish pulse message
+  await this.publisher.amiSetCreated({
+    amiSet: amiSetId,
+  });
+
+});
+
+api.declare({
+  method: 'delete',
+  route: '/ami-set/:amiSetId',
+  name: 'removeAmiSet',
+  deferAuth: true,
+  scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
+  input: undefined,  // No input
+  output: undefined,  // No output
+  title: 'Delete AMI Set',
+  stability:  base.API.stability.stable,
+  description: [
+    'Delete an AMI Set.',
+  ].join('\n'),
+}, async function (req, res) {
+  let that = this;
+  let amiSet = req.params.amiSetId;
+
+  if (!req.satisfies({amiSet: amiSetId})) { return undefined; }
+
+  try {
+    await this.amiSet.remove({amiSet: amiSetId}, true);
+    await that.publisher.amiSetRemoved({
+      amiSet: amiSetId,
+    });
+    res.status(204).end();
+  } catch (err) {
+    if (err.code === 'ResourceNotFound') {
+      res.status(204).end();
+    } else {
+      debug('unknown error deleting ' + amiSet);
+      debug(err);
+      if (err.stack) {
+        debug(err.stack);
+      }
+      throw err;
+    }
   }
 });
 
