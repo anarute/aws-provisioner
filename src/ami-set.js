@@ -8,16 +8,37 @@ const KEY_CONST = 'ami-set';
  * by its AWS region.
  */
 
-let amiSet = base.Entity.configure({
+let AmiSet = base.Entity.configure({
   version: 1,
 
   partitionKey: base.Entity.keys.ConstantKey(KEY_CONST),
-  rowKey: base.Entity.keys.StringKey('amiSetId'),
+  rowKey: base.Entity.keys.StringKey('id'),
 
   properties: {
 
-    amiSetId: base.Entity.types.String,
+    id: base.Entity.types.String,
+    /* This is a JSON object which contains the AMIs of an AMI set keyed by
+     * their virtualization type and region. It is in the shape:
+     * {
+     *   hvm: {
+     *       region: {
+     *           us-west-1: ami-1111,
+     *           us-west-2: ami-2222
+     *     }
+     *   },
+     *   pv: {
+     *       region: {
+     *           us-west-1: ami-3333,
+     *           us-west-2: ami-4444
+     *       }
+     *   }
+     * }
+     */
     amis: base.Entity.types.JSON,
+    // Store the date of last modification for this entity
+    lastModified: base.Entity.types.Date,
 
   },
 });
+
+module.exports = AmiSet;
