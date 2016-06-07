@@ -11,7 +11,6 @@ let base = require('taskcluster-base');
 
 let workerType = require('./worker-type');
 let secret = require('./secret');
-let workerState = require('./worker-state');
 let amiSet = require('./ami-set');
 let AwsManager = require('./aws-manager');
 let provision = require('./provision');
@@ -61,27 +60,15 @@ let load = base.loader({
     },
   },
 
-  WorkerState: {
+  AmiSet: {
     requires: ['cfg'],
     setup: async ({cfg}) => {
-      let WorkerState = workerState.setup({
+      let AmiSet = AmiSet.setup({
         account: cfg.azure.account,
-        table: cfg.app.workerStateTableName,
+        table: cfg.app.amiSetTableName,
         credentials: cfg.taskcluster.credentials,
       });
-      return WorkerState;
-    },
-  },
-
-  amiSet: {
-    requires: ['cfg'],
-    setup: async ({cfg}) => {
-      let amiSet = amiSet.setup({
-        account: cfg.azure.account,
-        table: cfg.app.workerStateTableName,
-        credentials: cfg.taskcluster.credentials,
-      });
-      return amiSet;
+      return AmiSet;
     },
   },
 
@@ -150,15 +137,15 @@ let load = base.loader({
   },
 
   api: {
-    requires: ['cfg', 'WorkerType', 'WorkerState', 'amiSet', 'Secret', 'ec2', 'validator', 'publisher', 'influx'],
-    setup: async ({cfg, WorkerType, WorkerState, amiSet, Secret, ec2, validator, publisher, influx}) => {
+    requires: ['cfg', 'WorkerType', 'AmiSet', 'Secret', 'ec2', 'validator', 'publisher', 'influx'],
+    setup: async ({cfg, WorkerType, AmiSet, Secret, ec2, validator, publisher, influx}) => {
 
       let reportInstanceStarted = series.instanceStarted.reporter(influx);
 
       let router = await v1.setup({
         context: {
           WorkerType: WorkerType,
-          amiSet: amiSet,
+          AmiSet: AmiSet,
           Secret: Secret,
           publisher: publisher,
           keyPrefix: cfg.app.awsKeyPrefix,
