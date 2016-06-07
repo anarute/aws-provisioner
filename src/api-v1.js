@@ -584,8 +584,6 @@ api.declare({
   name: 'createAmiSet',
   deferAuth: true,
   scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
-  input: 'create-ami-set-request.json#',
-  output: 'get-ami-set-response.json#',
   title: 'Create new AMI Set',
   stability:  base.API.stability.stable,
   description: [
@@ -593,32 +591,32 @@ api.declare({
   ].join('\n'),
 }, async function (req, res) {
   let input = req.body;
-  let amiSet = req.params.amiSetId;
+  let AmiSetId = req.params.id;
 
   input.lastModified = new Date();
 
   // Authenticate request with parameterized scope
-  if (!req.satisfies({amiSet: amiSetId})) {
+  if (!req.satisfies({amiSet: AmiSetId})) {
     return;
   }
 
   // Create amiSet
-  let aSet;
+  let amiSetId;
   try {
-    aSet = await this.amiSet.create(amiSet, input);
+    amiSetId = await this.AmiSet.create(amiSet, input);
   } catch (err) {
     // We only catch EntityAlreadyExists errors
     if (!err || err.code !== 'EntityAlreadyExists') {
       throw err;
     }
-    aSet = await this.amiSet.load({amiSetId});
+    amiSetId = await this.AmiSet.load({AmiSetId});
 
     // Check if it matches the existing amiSet
     let match = [
-      'amiSetId',
+      'id',
       'amis',
     ].every((key) => {
-      return _.isEqual(aSet[key], input[key]);
+      return _.isEqual(amiSetId[key], input[key]);
     });
 
     // If we don't have a match we return 409, otherwise we continue as this is
@@ -631,11 +629,6 @@ api.declare({
     }
   }
 
-  // Publish pulse message
-  await this.publisher.amiSetCreated({
-    amiSet: amiSetId,
-  });
-
 });
 
 api.declare({
@@ -644,8 +637,6 @@ api.declare({
   name: 'removeAmiSet',
   deferAuth: true,
   scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
-  input: undefined,  // No input
-  output: undefined,  // No output
   title: 'Delete AMI Set',
   stability:  base.API.stability.stable,
   description: [
@@ -654,8 +645,6 @@ api.declare({
 }, async function (req, res) {
   let that = this;
   let amiSet = req.params.amiSetId;
-
-  if (!req.satisfies({amiSet: amiSetId})) { return undefined; }
 
   try {
     await this.amiSet.remove({amiSet: amiSetId}, true);
