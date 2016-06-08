@@ -137,8 +137,8 @@ let load = base.loader({
   },
 
   api: {
-    requires: ['cfg', 'WorkerType', 'AmiSet', 'Secret', 'ec2', 'validator', 'publisher', 'influx'],
-    setup: async ({cfg, WorkerType, AmiSet, Secret, ec2, validator, publisher, influx}) => {
+    requires: ['cfg', 'WorkerType', 'AmiSet', 'Secret', 'ec2', 'stateContainer', 'validator', 'publisher', 'influx'],
+    setup: async ({cfg, WorkerType, AmiSet, Secret, ec2, stateContainer, validator, publisher, influx}) => {
 
       let reportInstanceStarted = series.instanceStarted.reporter(influx);
 
