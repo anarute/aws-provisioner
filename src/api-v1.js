@@ -580,7 +580,7 @@ api.declare({
 
 api.declare({
   method: 'put',
-  route: '/ami-set/:amiSetId',
+  route: '/ami-set/:id',
   name: 'createAmiSet',
   deferAuth: true,
   scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
@@ -591,25 +591,25 @@ api.declare({
   ].join('\n'),
 }, async function (req, res) {
   let input = req.body;
-  let AmiSetId = req.params.id;
+  let id = req.params.id;
 
   input.lastModified = new Date();
 
   // Authenticate request with parameterized scope
-  if (!req.satisfies({amiSet: AmiSetId})) {
+  if (!req.satisfies({id: id})) {
     return;
   }
 
   // Create amiSet
-  let amiSetId;
+  let amiSet;
   try {
-    amiSetId = await this.AmiSet.create(amiSet, input);
+    amiSet = await this.AmiSet.create(AmiSet, input);
   } catch (err) {
     // We only catch EntityAlreadyExists errors
     if (!err || err.code !== 'EntityAlreadyExists') {
       throw err;
     }
-    amiSetId = await this.AmiSet.load({AmiSetId});
+    amiSet = await this.AmiSet.load({id});
 
     // Check if it matches the existing amiSet
     let match = [
@@ -633,7 +633,7 @@ api.declare({
 
 api.declare({
   method: 'delete',
-  route: '/ami-set/:amiSetId',
+  route: '/ami-set/:id',
   name: 'removeAmiSet',
   deferAuth: true,
   scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
@@ -643,20 +643,16 @@ api.declare({
     'Delete an AMI Set.',
   ].join('\n'),
 }, async function (req, res) {
-  let that = this;
-  let amiSet = req.params.amiSetId;
+  let id = req.params.id;
 
   try {
-    await this.amiSet.remove({amiSet: amiSetId}, true);
-    await that.publisher.amiSetRemoved({
-      amiSet: amiSetId,
-    });
+    await this.AmiSet.remove({id: id}, true);
     res.status(204).end();
   } catch (err) {
     if (err.code === 'ResourceNotFound') {
       res.status(204).end();
     } else {
-      debug('unknown error deleting ' + amiSet);
+      debug('unknown error deleting AMI Set ' + id);
       debug(err);
       if (err.stack) {
         debug(err.stack);
