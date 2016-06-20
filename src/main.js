@@ -63,7 +63,7 @@ let load = base.loader({
   AmiSet: {
     requires: ['cfg'],
     setup: async ({cfg}) => {
-      let AmiSet = AmiSet.setup({
+      let AmiSet = amiSet.setup({
         account: cfg.azure.account,
         table: cfg.app.amiSetTableName,
         credentials: cfg.taskcluster.credentials,
