@@ -632,6 +632,67 @@ api.declare({
 });
 
 api.declare({
+  method: 'get',
+  route: '/ami-set/:id',
+  name: 'getAmiSet',
+  deferAuth: true,
+  scopes: [
+    ['aws-provisioner:view-ami-set:<amiSetId>'],
+    ['aws-provisioner:manage-ami-set:<amiSetId>'],
+  ],
+  title: 'Get AMI Set',
+  stability:  base.API.stability.stable,
+  description: [
+    'Retreive a copy of the requested AMI set.',
+  ].join('\n'),
+}, async function (req, res) {
+  let id = req.params.id;
+
+  // Authenticate request with parameterized scope
+  if (!req.satisfies({id: id})) {
+    return;
+  }
+
+  let amiSet;
+  try {
+    amiSet = await this.AmiSet.load({id: id});
+  } catch (err) {
+    if (err.code === 'ResourceNotFound') {
+      res.status(404).json({
+        error: err.code,
+        msg: id + ' not found',
+      });
+    } else {
+      throw err;
+    }
+  }
+});
+
+api.declare({
+  method: 'get',
+  route: '/list-ami-sets',
+  name: 'listAmiSets',
+  title: 'List AMI sets',
+  stability:  base.API.stability.stable,
+  description: [
+    'Return a list of AMI sets JSON objects.',
+  ].join('\n'),
+}, async function (req, res) {
+
+  try {
+    let list = await this.AmiSet.listAmiSets();
+    return res.reply(list);
+  } catch (err) {
+    debug('error listing amiSets');
+    debug(err);
+    if (err.stack) {
+      debug(err.stack);
+    }
+    throw err;
+  }
+});
+
+api.declare({
   method: 'delete',
   route: '/ami-set/:id',
   name: 'removeAmiSet',

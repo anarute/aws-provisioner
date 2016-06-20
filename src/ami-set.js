@@ -41,4 +41,29 @@ let AmiSet = base.Entity.configure({
   },
 });
 
+/**
+ * Load all the knwon Amis
+ */
+AmiSet.listAmiSets = async function () {
+
+  let amislist = [];
+
+  try {
+    await base.Entity.scan.call(this, {}, {
+      handler: function(item) {
+        amislist.push(item.amis.json());
+      },
+    });
+  } catch (err) {
+    debug('error listing Ami sets');
+    debug(err);
+    if (err.stack) {
+      debug(err.stack);
+    }
+    throw err;
+  }
+
+  return amislist;
+};
+
 module.exports = AmiSet;
