@@ -603,7 +603,7 @@ api.declare({
   // Create amiSet
   let amiSet;
   try {
-    amiSet = await this.AmiSet.create(AmiSet, input);
+    amiSet = await this.AmiSet.create(id, input);
   } catch (err) {
     // We only catch EntityAlreadyExists errors
     if (!err || err.code !== 'EntityAlreadyExists') {
@@ -616,7 +616,7 @@ api.declare({
       'id',
       'amis',
     ].every((key) => {
-      return _.isEqual(amiSetId[key], input[key]);
+      return _.isEqual(amiSet[key], input[key]);
     });
 
     // If we don't have a match we return 409, otherwise we continue as this is
@@ -656,6 +656,7 @@ api.declare({
   let amiSet;
   try {
     amiSet = await this.AmiSet.load({id: id});
+    res.reply(amiSet);
   } catch (err) {
     if (err.code === 'ResourceNotFound') {
       res.status(404).json({

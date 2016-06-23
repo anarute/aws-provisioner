@@ -1,4 +1,5 @@
 let base = require('taskcluster-base');
+let debug = require('debug')('aws-provisioner:AmiSet');
 
 const KEY_CONST = 'ami-set';
 
@@ -46,12 +47,12 @@ let AmiSet = base.Entity.configure({
  */
 AmiSet.listAmiSets = async function () {
 
-  let amislist = [];
+  let amiSetList = [];
 
   try {
     await base.Entity.scan.call(this, {}, {
       handler: function(item) {
-        amislist.push(item.amis.json());
+        amiSetList.push(item.amis.json());
       },
     });
   } catch (err) {
@@ -63,7 +64,7 @@ AmiSet.listAmiSets = async function () {
     throw err;
   }
 
-  return amislist;
+  return amiSetList;
 };
 
 module.exports = AmiSet;
