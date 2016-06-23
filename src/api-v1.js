@@ -670,6 +670,63 @@ api.declare({
 });
 
 api.declare({
+  method: 'post',
+  route: '/ami-set/:id/update',
+  name: 'updateAmiSet',
+  deferAuth: true,
+  scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
+  title: 'Update AMI Set',
+  stability:  base.API.stability.stable,
+  description: [
+    'Provide a new copy of an AMI Set to replace the existing one.',
+    'This will overwrite the existing AMI Set if there',
+    'is already an AMI Set of that name. This method will return a',
+    '200 response along with a copy of the AMI Set created.',
+    'Note that if you are using the result of a GET on the ami-set',
+    'end point that you will need to delete the lastModified and amiSet',
+    'keys from the object returned, since those fields are not allowed',
+    'the request body for this method.',
+    '',
+    'Otherwise, all input requirements and actions are the same as the',
+    'create method.',
+  ].join('\n'),
+}, async function (req, res) {
+  let input = req.body;
+  let id = req.params.id;
+
+  let modDate = new Date();
+
+  input.lastModified = modDate;
+
+  if (!req.satisfies({id: id})) {
+    return;
+  }
+
+  try {
+    await validateAmiSet(this, id, input);
+  } catch (err) {
+    res.status(400).json({
+      message: 'Invalid AMI Set',
+      error: {
+        reasons: err.reasons,
+      },
+    });
+    return;
+  }
+
+  let amiSet = await this.AmiSet.load({id: id});
+
+  await amiSet.modify(function(amiS) {
+    // We know that data that gets to here is valid per-schema
+    for (let key of Object.keys(input)) {
+      amiS[key] = input[key];
+      amiS.lastModified = modDate;
+    }
+  });
+  return res.reply(amiSet.json());
+});
+
+api.declare({
   method: 'get',
   route: '/list-ami-sets',
   name: 'listAmiSets',
