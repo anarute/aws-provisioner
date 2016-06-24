@@ -656,7 +656,7 @@ api.declare({
   let amiSet;
   try {
     amiSet = await this.AmiSet.load({id: id});
-    res.reply(amiSet);
+    res.reply(amiSet.amis.json());
   } catch (err) {
     if (err.code === 'ResourceNotFound') {
       res.status(404).json({
