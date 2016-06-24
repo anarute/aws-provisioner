@@ -12,10 +12,10 @@ var helper = require('./helper');
 
 describe('AMI Set api', () => {
 
-  var id = slugid.nice();
+  // var id = slugid.nice();
   var amiSetDefinition = makeAmiSet();
   var amiSetChanged = _.clone(amiSetDefinition);
-
+  var id = amiSetDefinition.id;
   let amiSet;
 
   let client;

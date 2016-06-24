@@ -582,6 +582,7 @@ api.declare({
   method: 'put',
   route: '/ami-set/:id',
   name: 'createAmiSet',
+  input: 'create-ami-set-request.json#',
   deferAuth: true,
   scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
   title: 'Create new AMI Set',
@@ -603,7 +604,11 @@ api.declare({
   // Create amiSet
   let amiSet;
   try {
-    amiSet = await this.AmiSet.create(id, input);
+    amiSet = await this.AmiSet.create({
+      id: id,
+      amis: input.amis,
+      lastModified: new Date(),
+    });
   } catch (err) {
     // We only catch EntityAlreadyExists errors
     if (!err || err.code !== 'EntityAlreadyExists') {
@@ -628,6 +633,8 @@ api.declare({
       return;
     }
   }
+  res.reply({outcome: 'success'});
+  return;
 
 });
 
@@ -635,6 +642,7 @@ api.declare({
   method: 'get',
   route: '/ami-set/:id',
   name: 'getAmiSet',
+  output: 'get-ami-set-response.json#',
   deferAuth: true,
   scopes: [
     ['aws-provisioner:view-ami-set:<amiSetId>'],
@@ -656,7 +664,7 @@ api.declare({
   let amiSet;
   try {
     amiSet = await this.AmiSet.load({id: id});
-    res.reply(amiSet.amis.json());
+    res.reply(amiSet.json());
   } catch (err) {
     if (err.code === 'ResourceNotFound') {
       res.status(404).json({
@@ -675,6 +683,8 @@ api.declare({
   name: 'updateAmiSet',
   deferAuth: true,
   scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
+  input: 'create-ami-set-request.json#',
+  output: 'get-ami-set-response.json#',
   title: 'Update AMI Set',
   stability:  base.API.stability.stable,
   description: [
@@ -699,18 +709,6 @@ api.declare({
   input.lastModified = modDate;
 
   if (!req.satisfies({id: id})) {
-    return;
-  }
-
-  try {
-    await validateAmiSet(this, id, input);
-  } catch (err) {
-    res.status(400).json({
-      message: 'Invalid AMI Set',
-      error: {
-        reasons: err.reasons,
-      },
-    });
     return;
   }
 
@@ -756,6 +754,8 @@ api.declare({
   name: 'removeAmiSet',
   deferAuth: true,
   scopes: [['aws-provisioner:manage-ami-set:<amiSetId>']],
+  input: undefined,  // No input
+  output: undefined,  // No output
   title: 'Delete AMI Set',
   stability:  base.API.stability.stable,
   description: [
@@ -764,8 +764,12 @@ api.declare({
 }, async function (req, res) {
   let id = req.params.id;
 
+  if (!req.satisfies({id: id})) {
+    return;
+  }
+
   try {
-    await this.AmiSet.remove({id: id}, true);
+    await this.AmiSet.remove({id: id});
     res.status(204).end();
   } catch (err) {
     if (err.code === 'ResourceNotFound') {
