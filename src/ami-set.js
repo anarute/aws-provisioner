@@ -67,4 +67,14 @@ AmiSet.listAmiSets = async function () {
   return amiSetList;
 };
 
+/**
+ * Return an Object for JSON encoding which represents
+ * the data associated with this AMI Set.  This is a
+ * method intended for use in displaying the data associated
+ * with a given amiSet
+ */
+AmiSet.prototype.json = function() {
+  return JSON.parse(JSON.stringify(this._properties));
+};
+
 module.exports = AmiSet;
