@@ -16,6 +16,7 @@ describe('AMI Set api', () => {
   var amiSetDefinition = makeAmiSet();
   var amiSetChanged = _.clone(amiSetDefinition);
   var id = amiSetDefinition.id;
+  var amis = amiSetDefinition.amis;
   let amiSet;
 
   let client;
@@ -46,7 +47,7 @@ describe('AMI Set api', () => {
     debug('### Load amiSet');
     await client.createAmiSet(id, amiSetDefinition);
 
-    var amiSet = await client.amiSet(id);
+    var amiSet = await client.getAmiSet(id);
 
     debug('### Update amiSet');
     try {
@@ -57,7 +58,7 @@ describe('AMI Set api', () => {
     }
 
     debug('### Load amiSet (again)');
-    amiSet = await client.amiSet(id);
+    amiSet = await client.getAmiSet(id);
   });
 
   it('should be able to remove an AMI set (idempotent)', async () => {
@@ -67,7 +68,7 @@ describe('AMI Set api', () => {
 
     debug('### Try to load AMI Set');
     try {
-      await client.amiSet(id);
+      await client.getAmiSet(id);
       throw new Error('Expected and error');
     } catch (err) {
       assume(err.statusCode).equals(404);
