@@ -229,6 +229,38 @@ WorkerType = WorkerType.configure({
   context: ['provisionerId', 'provisionerBaseUrl', 'keyPrefix', 'pubKey'],
 });
 
+// We want to add the amiSetId field
+WorkerType = WorkerType.configure({
+  version: 4,
+  properties: {
+    // These fields are documented in Versions 1 to 3 of this Entity
+    workerType: base.Entity.types.String,
+    minCapacity: base.Entity.types.Number,
+    maxCapacity: base.Entity.types.Number,
+    scalingRatio: base.Entity.types.Number,
+    minPrice: base.Entity.types.Number,
+    maxPrice: base.Entity.types.Number,
+    canUseOndemand: base.Entity.types.JSON,
+    canUseSpot: base.Entity.types.JSON,
+    instanceTypes: base.Entity.types.JSON,
+    regions: base.Entity.types.JSON,
+    lastModified: base.Entity.types.Date,
+    userData: base.Entity.types.JSON,
+    launchSpec: base.Entity.types.JSON,
+    secrets: base.Entity.types.JSON,
+    scopes: base.Entity.types.JSON,
+    description: base.Entity.types.String,
+    owner: base.Entity.types.String,
+    // Add the AMI set related to this Worker type
+    amiSetId: base.Entity.types.String,
+  },
+  migrate: function(item) {
+    item.amiSetId = '';
+    return item;
+  },
+  context: ['provisionerId', 'provisionerBaseUrl', 'keyPrefix', 'pubKey'],
+});
+
 /**
  * Create a workerType in the table.  The properties
  * should not have a workerType key since that will be
