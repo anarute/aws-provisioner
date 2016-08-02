@@ -38,5 +38,6 @@
     "overwrites": {
       "ImageId": "ami-dfc39aef"
     }
-  }]
+  }],
+  "amiSetId" : ""
 }

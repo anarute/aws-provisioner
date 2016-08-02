@@ -344,6 +344,7 @@ api.declare({
       'canUseSpot',
       'instanceTypes',
       'regions',
+      'amiSetId',
     ].every((key) => {
       return _.isEqual(wType[key], input[key]);
     });

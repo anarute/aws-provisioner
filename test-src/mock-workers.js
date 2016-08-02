@@ -50,6 +50,7 @@ var baseWorkerType = {
       scopes: [],
     },
   ],
+  amiSetId : '',
 };
 
 function makeRegion(overwrites) {

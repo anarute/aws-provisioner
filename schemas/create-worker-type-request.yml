@@ -179,6 +179,10 @@ properties:
         - secrets
         - userData
         - scopes
+  amiSetId:
+    type: string
+    description: |
+      A string which relates the AMI set of this worker type
 additionalProperties: false
 required:
   - launchSpec
